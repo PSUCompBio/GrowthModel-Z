@@ -9,7 +9,7 @@ int main()
 {
 	//an array of vector
 	//supose only record 100 nodes in an axon,so the array has 100 elements
-	int nodes = 100;
+	int nodes = 120;
 	vector <double> coordinates[nodes];
 	for (int i = 0; i < nodes; i++)
 	{
