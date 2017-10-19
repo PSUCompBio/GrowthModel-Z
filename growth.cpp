@@ -8,7 +8,6 @@ using namespace std;
 int dim = 3;          							// Number of Dimensions - (x, y, z)
 int nodes;            							// Number of Nodes
 unordered_map <int, int> connectivity;			// Connectivity Matrix
-int **node_values;								// Node Values
 
 struct Node
 {
@@ -20,42 +19,99 @@ struct Node
 	Node (int val, double valX, double valY, double valZ) : value(val), x(valX), y(valY), z(valZ), next(NULL) {}
 };
 
+void printList (Node* head);
+
+void printConnectivity (Node* head);
+
+void fillConnectivity (Node *head);
+
+Node* enterData (Node* head);
+
 int main()
 {
-	Node *head = NULL, *l = NULL;
-	int i = 0, j = 0, flag = 1;
+	Node *head = NULL;
 
-	cout << "\n Enter the number of nodes: ";
-	cin >> nodes;
-
-	node_values = new int*[nodes];
+	head = enterData(head);
 	
-	for (i = 0; i < nodes; i++)
-	{
-		node_values[i] = new int[dim + 1];
-	}	
+	fillConnectivity(head);
+	
+	printConnectivity(head);
+	
+	cout << endl;
+}
 
-	cout << "\n Enter the Node values: ";
+void printList (Node* head)
+{
+	Node *l = head;	
 
-	for (i = 0; i < nodes; i++)
+	cout << "\n The linked list is: ";
+
+	while (l)
 	{
-		cin >> node_values[i][0];
+		if (l->next == NULL)
+			cout << " " << l->value;
+		
+		else
+			cout << " " << l->value << "->";
+
+		l = l->next;
+	}
+}
+
+void printConnectivity (Node* head)
+{
+	Node *l = head;
+
+	cout << "\n Connectivity Matrix - \n";
+
+	while (l && l->next)
+	{
+		cout << " " << l->value << " -> " << connectivity[l->value];
+		cout << endl;
+		l = l->next;
 	}
 
-	cout << "\n Enter the Coordinate values (x, y, z) - \n";
+}
+
+void fillConnectivity (Node *head)
+{
+	Node *l = head;
+	
+	while (l)
+	{
+		if (l && l->next)
+			connectivity[l->value] = l->next->value;
+
+		l = l->next;
+	}
+}
+
+Node* enterData (Node* head)
+{
+	Node *l = NULL;
+	int i = 0, j = 0, flag = 1, temp[4];
+
+	cout << "\n Enter the number of nodes: ";
+	cin >> nodes;	
+
+	cout << "\n Enter Data \n";
 
 	for (i = 0; i < nodes; i++)
 	{
-		cout << " " << node_values[i][0] << " : "; 
-		for (j = 1; j < dim + 1; j++)
+		j = 0;
+
+		cout << "\n Node Value: ";
+
+		cin >> temp[0];
+
+		cout << "\n Enter the Coordinate values (x, y, z) for Node " << temp[0] << ": ";
+
+		for (j = 1; j <= 3; j++)
 		{
-			cin >> node_values[i][j];
+			cin >> temp[j];
 		}
-	}	
-	
-	for (i = 0; i < nodes; i++)
-	{
-		Node *pointer = new Node(node_values[i][0], node_values[i][1], node_values[i][2], node_values[i][3]);
+
+		Node *pointer = new Node(temp[0], temp[1], temp[2], temp[3]);
 		
 		if (flag == 1)
 		{
@@ -71,37 +127,86 @@ int main()
 		}
 	}
 
-	l = head;
+	return head;
+}
 
-	cout << "\n The linked list is: ";
+/*
+void plotVTU(int time_step, Node* head)
+{
 
+	Node *l = head;
+
+	std::ostringstream var;
+	ofstream outFile;
+
+	var << "utenn_" << time_step+1 << ".vtu";
+	std::string filename = var.str();
+
+	outFile.open(filename.c_str());
+	
+	if (outFile.fail())
+	{
+		cout << "The file was not opened" << endl;
+		exit(1);
+	}
+
+	outFile << setiosflags(ios::fixed) << setiosflags(ios::showpoint) << std::setw(10) << setprecision(8);
+
+	outFile << "<?xml version=\"1.0\"?>\n";
+	outFile << "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\" byte_order=\"LittleEndian\">\n";
+	outFile << "\t<UnstructuredGrid>\n";
+	outFile << "\t\t<Piece NumberOfPoints=\"" << nodes << "\" NumberOfCells=\"" << nodes << "\">\n";
+
+	outFile << "\t\t\t<Points>\n";
+	outFile << "\t\t\t\t<DataArray type=\"Float32\" NumberOfComponents=\"3\" format=\"ascii\">\n";
+
+	// write out all coordinates for this time step
 	while (l)
 	{
-		if (l->next == NULL)
-			cout << " " << l->value;
-		
-		else
-			cout << " " << l->value << "->";
-
+		outFile << "\t\t\t\t\t" << l->x << "  " << l->y << "  " << l->z << endl;
 		l = l->next;
 	}
 
-	cout << "\n\n Enter the Connectivity Matrix - \n";
+	outFile << "\t\t\t\t</DataArray>\n";
+	outFile << "\t\t\t</Points>\n";
+
+	/ Cell Data *
+	// print connectivity
+	outFile << "\t\t\t<Cells>\n";
+	outFile << "\t\t\t\t<DataArray type=\"Int32\" Name=\"connectivity\" format=\"ascii\">\n";
 	
-	for (i = 0; i < nodes - 1; i++)
+	for (int k = 0; k < ncells; k++)
 	{
-		cout << " " << node_values[i][0] << " -> which node: ";
-		cin >> connectivity[node_values[i][0]];
-		cout << endl;
+		outFile << "\t\t\t\t\t";
+
+		for (int j = 0; j < max_elements_per_cell; j++)
+			outFile << connectivity[ncells*k*max_elements_per_cell+k+j]  << " " ;
+
+		outFile << endl;
 	}
 
-	cout << "\n Connectivity Matrix - \n";
+	outFile << "\t\t\t\t</DataArray>\n";
 
-	for (i = 0; i < nodes - 1; i++)
-	{
-		cout << " " << node_values[i][0] << " -> " << connectivity[node_values[i][0]];
-		cout << endl;
+	// print offsets (needed by vtu/paraview)
+	outFile << "\t\t\t\t<DataArray type=\"Int32\" Name=\"offsets\" format=\"ascii\">\n";
+	for (int k = 0; k < ncells; k++){
+	outFile << "\t\t\t\t\t" << "2"  << "\n";
 	}
+	outFile << "\t\t\t\t</DataArray>\n";
 
-	cout << endl;
+	// print cell types, using polyline
+	// see http://www.vtk.org/wp-content/uploads/2015/04/file-formats.pdf
+	outFile << "\t\t\t\t<DataArray type=\"UInt8\" Name=\"types\" format=\"ascii\">\n";
+	for (int k = 0; k < ncells; k++){
+	outFile << "\t\t\t\t\t" << "3" << endl;
+	}
+	outFile << "\t\t\t\t</DataArray>\n";
+
+	outFile << "\t\t\t</Cells>\n";
+	outFile << "\t\t</Piece>\n";
+	outFile << "\t</UnstructuredGrid>\n";
+	outFile << "</VTKFile>\n";
+
+	outFile.close();
 }
+*/
