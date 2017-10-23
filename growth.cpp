@@ -1,5 +1,8 @@
 #include <iostream>
 #include <unordered_map>
+#include <iomanip>
+#include <fstream>
+#include <string>
 
 using namespace std;
 
@@ -7,7 +10,7 @@ using namespace std;
 
 int dim = 3;          							// Number of Dimensions - (x, y, z)
 int nodes;            							// Number of Nodes
-unordered_map <int, int> connectivity;			// Connectivity Matrix
+unordered_map <int, int> connectivity;					// Connectivity Matrix
 
 struct Node
 {
@@ -23,20 +26,24 @@ void printList (Node* head);
 
 void printConnectivity (Node* head);
 
-void fillConnectivity (Node *head);
+void updateConnectivity (Node *head);
 
-Node* enterData (Node* head);
+Node* createNodes (Node* head);
+
+void plotVTU(int time_step, Node* head);
 
 int main()
 {
 	Node *head = NULL;
 
-	head = enterData(head);
+	head = createNodes(head);
 	
-	fillConnectivity(head);
+	updateConnectivity(head);
 	
 	printConnectivity(head);
 	
+	plotVTU (9, head);
+
 	cout << endl;
 }
 
@@ -73,7 +80,7 @@ void printConnectivity (Node* head)
 
 }
 
-void fillConnectivity (Node *head)
+void updateConnectivity (Node *head)
 {
 	Node *l = head;
 	
@@ -86,7 +93,7 @@ void fillConnectivity (Node *head)
 	}
 }
 
-Node* enterData (Node* head)
+Node* createNodes (Node* head)
 {
 	Node *l = NULL;
 	int i = 0, j = 0, flag = 1, temp[4];
@@ -130,19 +137,18 @@ Node* enterData (Node* head)
 	return head;
 }
 
-/*
+
 void plotVTU(int time_step, Node* head)
 {
 
 	Node *l = head;
 
-	std::ostringstream var;
+	string var = "utenn_";
+	var += to_string(time_step);
+	var += ".vtu";
+
 	ofstream outFile;
-
-	var << "utenn_" << time_step+1 << ".vtu";
-	std::string filename = var.str();
-
-	outFile.open(filename.c_str());
+	outFile.open(var);
 	
 	if (outFile.fail())
 	{
@@ -150,17 +156,16 @@ void plotVTU(int time_step, Node* head)
 		exit(1);
 	}
 
-	outFile << setiosflags(ios::fixed) << setiosflags(ios::showpoint) << std::setw(10) << setprecision(8);
+	outFile << setiosflags(ios::fixed) << setiosflags(ios::showpoint) << setw(10) << setprecision(8);
 
 	outFile << "<?xml version=\"1.0\"?>\n";
 	outFile << "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\" byte_order=\"LittleEndian\">\n";
 	outFile << "\t<UnstructuredGrid>\n";
-	outFile << "\t\t<Piece NumberOfPoints=\"" << nodes << "\" NumberOfCells=\"" << nodes << "\">\n";
+	outFile << "\t\t<Piece NumberOfPoints=\"" << nodes << "\" NumberOfCells=\"" << nodes - 1 << "\">\n";
 
 	outFile << "\t\t\t<Points>\n";
 	outFile << "\t\t\t\t<DataArray type=\"Float32\" NumberOfComponents=\"3\" format=\"ascii\">\n";
 
-	// write out all coordinates for this time step
 	while (l)
 	{
 		outFile << "\t\t\t\t\t" << l->x << "  " << l->y << "  " << l->z << endl;
@@ -170,35 +175,33 @@ void plotVTU(int time_step, Node* head)
 	outFile << "\t\t\t\t</DataArray>\n";
 	outFile << "\t\t\t</Points>\n";
 
-	/ Cell Data *
-	// print connectivity
 	outFile << "\t\t\t<Cells>\n";
 	outFile << "\t\t\t\t<DataArray type=\"Int32\" Name=\"connectivity\" format=\"ascii\">\n";
 	
-	for (int k = 0; k < ncells; k++)
+	l = head;
+
+	while (l)
 	{
 		outFile << "\t\t\t\t\t";
-
-		for (int j = 0; j < max_elements_per_cell; j++)
-			outFile << connectivity[ncells*k*max_elements_per_cell+k+j]  << " " ;
-
+		if (l->next != NULL)
+			outFile << l->value << " " << connectivity[l->value];
 		outFile << endl;
+		l = l->next;
 	}
 
 	outFile << "\t\t\t\t</DataArray>\n";
 
-	// print offsets (needed by vtu/paraview)
 	outFile << "\t\t\t\t<DataArray type=\"Int32\" Name=\"offsets\" format=\"ascii\">\n";
-	for (int k = 0; k < ncells; k++){
-	outFile << "\t\t\t\t\t" << "2"  << "\n";
+	for (int k = 0; k < nodes - 1; k++)
+	{
+		outFile << "\t\t\t\t\t" << "2"  << "\n";
 	}
 	outFile << "\t\t\t\t</DataArray>\n";
 
-	// print cell types, using polyline
-	// see http://www.vtk.org/wp-content/uploads/2015/04/file-formats.pdf
 	outFile << "\t\t\t\t<DataArray type=\"UInt8\" Name=\"types\" format=\"ascii\">\n";
-	for (int k = 0; k < ncells; k++){
-	outFile << "\t\t\t\t\t" << "3" << endl;
+	for (int k = 0; k < nodes - 1; k++)
+	{
+		outFile << "\t\t\t\t\t" << "4" << endl;
 	}
 	outFile << "\t\t\t\t</DataArray>\n";
 
@@ -209,4 +212,3 @@ void plotVTU(int time_step, Node* head)
 
 	outFile.close();
 }
-*/
