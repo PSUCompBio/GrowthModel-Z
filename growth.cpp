@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <fstream>
 #include <string>
+#include <random>
 
 using namespace std;
 
@@ -11,6 +12,7 @@ using namespace std;
 int dim = 3;          							// Number of Dimensions - (x, y, z)
 int nodes;            							// Number of Nodes
 unordered_map <int, int> connectivity;					// Connectivity Matrix
+unordered_map <int, int> check;
 
 struct Node
 {
@@ -30,7 +32,9 @@ void updateConnectivity (Node *head);
 
 Node* createNodes (Node* head);
 
-void plotVTU(int time_step, Node* head);
+void plotVTU (int time_step, Node* head);
+
+int randomGen (int low, int high);
 
 int main()
 {
@@ -42,7 +46,7 @@ int main()
 	
 	printConnectivity(head);
 	
-	plotVTU (9, head);
+	plotVTU (123, head);
 
 	cout << endl;
 }
@@ -99,23 +103,18 @@ Node* createNodes (Node* head)
 	int i = 0, j = 0, flag = 1, temp[4];
 
 	cout << "\n Enter the number of nodes: ";
-	cin >> nodes;	
-
-	cout << "\n Enter Data \n";
+	cin >> nodes;
 
 	for (i = 0; i < nodes; i++)
 	{
 		j = 0;
 
-		cout << "\n Node Value: ";
-
-		cin >> temp[0];
-
-		cout << "\n Enter the Coordinate values (x, y, z) for Node " << temp[0] << ": ";
+		temp[0] = randomGen(1, nodes);
+		check[temp[0]] = 1;
 
 		for (j = 1; j <= 3; j++)
 		{
-			cin >> temp[j];
+			temp[j] = randomGen(-10 - nodes, nodes + 10);
 		}
 
 		Node *pointer = new Node(temp[0], temp[1], temp[2], temp[3]);
@@ -137,6 +136,18 @@ Node* createNodes (Node* head)
 	return head;
 }
 
+int randomGen (int low, int high)
+{
+	int random;
+	int range = high - low + 1;
+
+	random = low + range * (rand() / (RAND_MAX + 1.0));
+
+	while (check[random])
+		random = low + range * (rand() / (RAND_MAX + 1.0));
+		
+	return random;
+}
 
 void plotVTU(int time_step, Node* head)
 {
@@ -164,7 +175,7 @@ void plotVTU(int time_step, Node* head)
 	outFile << "\t\t<Piece NumberOfPoints=\"" << nodes << "\" NumberOfCells=\"" << nodes - 1 << "\">\n";
 
 	outFile << "\t\t\t<Points>\n";
-	outFile << "\t\t\t\t<DataArray type=\"Float32\" NumberOfComponents=\"3\" format=\"ascii\">\n";
+	outFile << "\t\t\t\t<DataArray type=\"Float32\" Name=\"Points\" NumberOfComponents=\"3\" format=\"ascii\">\n";
 
 	while (l)
 	{
@@ -176,34 +187,46 @@ void plotVTU(int time_step, Node* head)
 	outFile << "\t\t\t</Points>\n";
 
 	outFile << "\t\t\t<Cells>\n";
-	outFile << "\t\t\t\t<DataArray type=\"Int32\" Name=\"connectivity\" format=\"ascii\">\n";
-	
+	outFile << "\t\t\t\t<DataArray type=\"Int64\" Name=\"connectivity\" format=\"ascii\">\n";
+
 	l = head;
 
 	while (l)
 	{
-		outFile << "\t\t\t\t\t";
 		if (l->next != NULL)
-			outFile << l->value << " " << connectivity[l->value];
-		outFile << endl;
+		{
+			outFile << "\t\t\t\t\t";
+			outFile << l->value - 1 << " " << connectivity[l->value] - 1;
+			outFile << endl;
+		}
 		l = l->next;
 	}
 
 	outFile << "\t\t\t\t</DataArray>\n";
 
-	outFile << "\t\t\t\t<DataArray type=\"Int32\" Name=\"offsets\" format=\"ascii\">\n";
-	for (int k = 0; k < nodes - 1; k++)
+	outFile << "\t\t\t\t<DataArray type=\"Int64\" Name=\"offsets\" format=\"ascii\">\n";
+	outFile << "\t\t\t\t\t";
+	for (int k = 1; k < nodes; k++)
 	{
-		outFile << "\t\t\t\t\t" << "2"  << "\n";
+		if (k != nodes - 1)
+			outFile << k * 2  << " ";
+		else
+			outFile << k * 2;
 	}
-	outFile << "\t\t\t\t</DataArray>\n";
+
+	outFile << "\n\t\t\t\t</DataArray>\n";
 
 	outFile << "\t\t\t\t<DataArray type=\"UInt8\" Name=\"types\" format=\"ascii\">\n";
+	outFile << "\t\t\t\t\t";
 	for (int k = 0; k < nodes - 1; k++)
 	{
-		outFile << "\t\t\t\t\t" << "4" << endl;
+		if (k != nodes - 1)
+			outFile << "3"  << " ";
+		else
+			outFile << "3";
 	}
-	outFile << "\t\t\t\t</DataArray>\n";
+
+	outFile << "\n\t\t\t\t</DataArray>\n";
 
 	outFile << "\t\t\t</Cells>\n";
 	outFile << "\t\t</Piece>\n";
