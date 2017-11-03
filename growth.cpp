@@ -172,7 +172,7 @@ void plotVTU(int time_step, Node* head)
 	outFile << "<?xml version=\"1.0\"?>\n";
 	outFile << "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\" byte_order=\"LittleEndian\">\n";
 	outFile << "\t<UnstructuredGrid>\n";
-	outFile << "\t\t<Piece NumberOfPoints=\"" << nodes << "\" NumberOfCells=\"" << nodes - 1 << "\">\n";
+	outFile << "\t\t<Piece NumberOfPoints=\"" << nodes << "\" NumberOfCells=\"" << "1" << "\">\n";
 
 	outFile << "\t\t\t<Points>\n";
 	outFile << "\t\t\t\t<DataArray type=\"Float32\" Name=\"Points\" NumberOfComponents=\"3\" format=\"ascii\">\n";
@@ -190,41 +190,26 @@ void plotVTU(int time_step, Node* head)
 	outFile << "\t\t\t\t<DataArray type=\"Int64\" Name=\"connectivity\" format=\"ascii\">\n";
 
 	l = head;
-
+	outFile << "\t\t\t\t\t" << l->value - 1;
 	while (l)
 	{
 		if (l->next != NULL)
 		{
-			outFile << "\t\t\t\t\t";
-			outFile << l->value - 1 << " " << connectivity[l->value] - 1;
-			outFile << endl;
+			outFile << " ";
+			outFile << connectivity[l->value] - 1;
 		}
 		l = l->next;
 	}
 
-	outFile << "\t\t\t\t</DataArray>\n";
+	outFile << "\n\t\t\t\t</DataArray>\n";
 
 	outFile << "\t\t\t\t<DataArray type=\"Int64\" Name=\"offsets\" format=\"ascii\">\n";
-	outFile << "\t\t\t\t\t";
-	for (int k = 1; k < nodes; k++)
-	{
-		if (k != nodes - 1)
-			outFile << k * 2  << " ";
-		else
-			outFile << k * 2;
-	}
+	outFile << "\t\t\t\t\t" << nodes;
 
 	outFile << "\n\t\t\t\t</DataArray>\n";
 
 	outFile << "\t\t\t\t<DataArray type=\"UInt8\" Name=\"types\" format=\"ascii\">\n";
-	outFile << "\t\t\t\t\t";
-	for (int k = 0; k < nodes - 1; k++)
-	{
-		if (k != nodes - 1)
-			outFile << "3"  << " ";
-		else
-			outFile << "3";
-	}
+	outFile << "\t\t\t\t\t4";
 
 	outFile << "\n\t\t\t\t</DataArray>\n";
 
