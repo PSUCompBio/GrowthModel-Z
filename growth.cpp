@@ -9,10 +9,10 @@ using namespace std;
 
 // Global variables
 
-int dim = 3;          						// Number of Dimensions - (x, y, z)
-int cells;							// Number of Cells
-int *nodes = NULL;            					// Number of Nodes
-unordered_map <int, int> connectivity;				// Connectivity Matrix
+int dim = 3;          							// Number of Dimensions - (x, y, z)
+int cells;								// Number of Cells
+int *nodes = NULL;            						// Number of Nodes
+unordered_map <int, int> connectivity;					// Connectivity Matrix
 unordered_map <int, int> check;
 
 struct Node
@@ -124,7 +124,7 @@ void updateConnectivity (Node *head)
 Node* createNodes (Node* head)
 {
 	Node *l = NULL;
-	int x = 0, k = 0, i = 0, j = 0, flag = 1, temp[4];
+	int x = 0, k = 0, i = 0, j = 0, flag = 1, temp[3], z_coord = 0, step = 0;
 
 	cout << "\n Enter the number of cells: ";
 	cin >> cells;
@@ -141,18 +141,20 @@ Node* createNodes (Node* head)
 	{
 		x = nodes[k];
 		check.clear();
-		
+		z_coord = 0;
+		step = 2 * (x + 10) / x;
+
 		for (i = 0; i < x; i++)
 		{
 			j = 0;
-
+			z_coord += step;
 			temp[0] = randomGen(1, x);
 			check[temp[0]] = 1;
 
-			for (j = 1; j <= 3; j++)
-				temp[j] = randomGen(-1000 - x, x + 1000);
+			for (j = 1; j <= 2; j++)
+				temp[j] = randomGen(-10 - x, x + 10);
 
-			Node *pointer = new Node(temp[0], temp[1], temp[2], temp[3]);
+			Node *pointer = new Node(temp[0], temp[1], temp[2], z_coord);
 			
 			if (flag == 1)
 			{
@@ -206,6 +208,7 @@ void plotVTU(int time_step, Node* head)
 	outFile << setiosflags(ios::fixed) << setiosflags(ios::showpoint) << setw(10) << setprecision(8);
 
 	int addOff = 0, i = 0, counter = 0, total = 0, *offset;
+	float step = 0.0, color = 0.0;
 	offset = new int[cells];
 	
 	for (i = 0; i < cells; i++)
@@ -219,11 +222,30 @@ void plotVTU(int time_step, Node* head)
 		total += nodes[i];
 	}
 
+	step = 1.0 / cells;
+
 	outFile << "<?xml version=\"1.0\"?>\n";
 	outFile << "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\" byte_order=\"LittleEndian\">\n";
 	outFile << "\t<UnstructuredGrid>\n";
 	outFile << "\t\t<Piece NumberOfPoints=\"" << total << "\" NumberOfCells=\"" << cells << "\">\n";
+	
+	outFile << "\t\t\t<CellData Scalars=\"cell_scalars\">\n";
+	outFile << "\t\t\t\t<DataArray type=\"Float32\" Name=\"cell_scalars\" format=\"ascii\">\n";
+	outFile << "\t\t\t\t\t";
+	
+	for (i = 0; i < cells; i++)
+	{
+		if (i != 0)
+			color += step;
 
+		if (i != cells - 1)
+			outFile << color << " ";
+		
+		else
+			outFile << color << "\n";
+	}
+	outFile << "\t\t\t\t</DataArray>\n";
+	outFile << "\t\t\t</CellData>\n";
 	outFile << "\t\t\t<Points>\n";
 	outFile << "\t\t\t\t<DataArray type=\"Float32\" Name=\"Points\" NumberOfComponents=\"3\" format=\"ascii\">\n";
 
