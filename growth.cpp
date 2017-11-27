@@ -124,17 +124,19 @@ void updateConnectivity (Node *head)
 Node* createNodes (Node* head)
 {
 	Node *l = NULL;
-	int x = 0, k = 0, i = 0, j = 0, flag = 1, temp[3], z_coord = 0, step = 0;
+	int nnodes = 0, x = 0, k = 0, i = 0, j = 0, flag = 1, temp[3], z_coord = 0, step = 0;
 
 	cout << "\n Enter the number of cells: ";
 	cin >> cells;
+
+	cout << "\n Enter the number of nodes in each cell: ";
+	cin >> nnodes;
 
 	nodes = new int[cells];
 	
 	for (i = 0; i < cells; i++)
 	{
-		cout << "\n Enter the number of nodes for cell " << i + 1 << ": ";
-		cin >> nodes[i];
+		nodes[i] = nnodes;
 	}
 
 	for (k = 0; k < cells; k++)
