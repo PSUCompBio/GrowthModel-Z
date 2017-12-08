@@ -1,5 +1,5 @@
 #include <iostream>
-#include <unordered_map>
+#include <list>
 #include <iomanip>
 #include <fstream>
 #include <string>
@@ -7,192 +7,166 @@
 
 using namespace std;
 
-// Global variables
+int cells;
 
-int dim = 3;          							// Number of Dimensions - (x, y, z)
-int cells;								// Number of Cells
-int *nodes = NULL;            						// Number of Nodes
-unordered_map <int, int> connectivity;					// Connectivity Matrix
-unordered_map <int, int> check;
-
-struct Node
+class node
 {
-	int value;
-	double x;
-	double y;
-	double z;
-	Node *next;
-	Node (int val, double valX, double valY, double valZ) : value(val), x(valX), y(valY), z(valZ), next(NULL) {}
+	// Overloading the "<<" operator. Marked as friend for easier access.
+	friend ostream &operator << (ostream &, const node &);
+
+	public:
+
+		// Data Members
+		double x;
+		double y;
+		double z;
+
+		// Constructors
+		node();
+		node(const node &);
+
+		// Destructor
+		~node(){};
+
+		// Overloaded Operators
+		node &operator = (const node &temp);
+		int operator == (const node &temp) const;
+		int operator < (const node &temp) const;
 };
 
-void printList (Node* head);
+node::node()
+{
+	x = 0.0;
+	y = 0.0;
+	z = 0.0;
+}
 
-void printConnectivity (Node* head);
+node::node(const node &copy)
+{                             
+	x = copy.x;
+	y = copy.y;
+	z = copy.z;
+}
 
-void updateConnectivity (Node *head);
+ostream &operator << (ostream &output, const node &temp)
+{
+	output << " " << temp.x << " " << temp.y << " " << temp.z << endl;
+	return output;
+}
 
-Node* createNodes (Node* head);
+node& node::operator = (const node &temp)
+{
+	this->x = temp.x;
+	this->y = temp.y;
+	this->z = temp.z;
+	return *this;
+}
 
-void plotVTU (int time_step, Node* head);
+int node::operator == (const node &temp) const
+{
+	if ((this->x != temp.x) || (this->y != temp.y) || (this->z != temp.z))
+		return 0;
+	
+	else
+		return 1;
+}
 
-int randomGen (int low, int high);
+// Required for certain built-in functions
+int node::operator < (const node &temp) const
+{
+	if(this->x == temp.x && this->y == temp.y && this->z < temp.z)
+		return 1;
+	
+	if(this->x == temp.x && this->y < temp.y)
+		return 1;
+	
+	if(this->x < temp.x)
+		return 1;
+	
+	return 0;
+}
+
+double randomGen (double low, double high);
+
+void plotVTU (int time_step, list<node> united[]);
 
 int main()
 {
-	Node *head = NULL;
-
-	head = createNodes(head);
-	
-	updateConnectivity(head);
-	
-	printConnectivity(head);
-	
-	plotVTU (123, head);
-
-	cout << endl;
-}
-
-void printList (Node* head)
-{
-	Node *l = head;	
-
-	cout << "\n The linked list is: ";
-
-	while (l)
-	{
-		if (l->next == NULL)
-			cout << " " << l->value;
-		
-		else
-			cout << " " << l->value << "->";
-
-		l = l->next;
-	}
-}
-
-void printConnectivity (Node* head)
-{
-	Node *l = head;
-	int addOff = 0, i = 0, counter = 0;
-
-	cout << "\n Connectivity Matrix - \n";
-
-	for (i = 0; i < cells; i++)
-	{
-		cout <<"\n Cell " << i + 1 << " - \n";
-		
-		if (i != 0)
-			addOff += nodes[i - 1];
-
-		for (counter = 1; counter < nodes[i]; counter++)
-		{
-			if (l && l->next)
-				cout << " " << l->value + addOff << " -> " << connectivity[l->value + addOff] << endl;
-
-			l = l->next;
-		}
-
-		if (l)
-			l = l->next;
-	}
-
-}
-
-void updateConnectivity (Node *head)
-{
-	Node *l = head;
-	int addOff = 0, i = 0, counter = 0;
-
-	for (i = 0; i < cells; i++)
-	{
-		if (i != 0)
-			addOff += nodes[i - 1];
-
-		for (counter = 1; counter < nodes[i]; counter++)
-		{
-			if (l && l->next)
-				connectivity[l->value + addOff] = l->next->value + addOff;
-
-			l = l->next;
-		}
-
-		if (l)
-			l = l->next;
-	}
-}
-
-Node* createNodes (Node* head)
-{
-	Node *l = NULL;
-	int nnodes = 0, x = 0, k = 0, i = 0, j = 0, flag = 1, temp[3], z_coord = 0, step = 0;
+	srand(time(NULL));
 
 	cout << "\n Enter the number of cells: ";
 	cin >> cells;
 
-	cout << "\n Enter the number of nodes in each cell: ";
-	cin >> nnodes;
+	int counter = 0, yRange = 0, time_step = 0;
+	double zStep = 10.0;
 
-	nodes = new int[cells];
+	node temp;
+	list <node> united[cells];
+	list <node>::reverse_iterator rit;
 	
-	for (i = 0; i < cells; i++)
-	{
-		nodes[i] = nnodes;
+	while (counter < cells)
+	{	
+		yRange = counter * 100;
+		
+		temp.x = 0;
+		
+		temp.y = randomGen(yRange - 25, yRange + 25);
+		
+		if (counter % 2)
+			temp.z = 0;
+		
+		else
+			temp.z = 1000;
+		
+		united[counter].push_back(temp);
+		
+		counter += 1;
 	}
-
-	for (k = 0; k < cells; k++)
+	
+	for (time_step = 0; time_step <= 100; time_step++)
 	{
-		x = nodes[k];
-		check.clear();
-		z_coord = 0;
-		step = 2 * (x + 10) / x;
+		plotVTU (time_step, united);
 
-		for (i = 0; i < x; i++)
-		{
-			j = 0;
-			z_coord += step;
-			temp[0] = randomGen(1, x);
-			check[temp[0]] = 1;
+		counter = 0;
+		
+		while (counter < cells)
+		{	
+			rit = united[counter].rbegin();
 
-			for (j = 1; j <= 2; j++)
-				temp[j] = randomGen(-10 - x, x + 10);
-
-			Node *pointer = new Node(temp[0], temp[1], temp[2], z_coord);
+			yRange = counter * 100;
 			
-			if (flag == 1)
-			{
-				head = pointer;
-				l = pointer;
-				flag = 0;
-			}
-
+			temp.x = 0;
+			
+			temp.y = randomGen(yRange - 25, yRange + 25);
+			
+			if (counter % 2)
+				temp.z = rit->z + zStep;
+			
 			else
-			{
-				l->next = pointer;
-				l = pointer;
-			}
+				temp.z = rit->z - zStep;
+
+			united[counter].push_back(temp);
+			
+			counter += 1;
 		}
 	}
 	
-	return head;
+	cout << endl;
 }
 
-int randomGen (int low, int high)
+double randomGen (double low, double high)
 {
-	int random;
-	int range = high - low + 1;
+	double random;
+	double range = high - low + 1;
 
 	random = low + range * (rand() / (RAND_MAX + 1.0));
-
-	while (check[random])
-		random = low + range * (rand() / (RAND_MAX + 1.0));
-		
+	
 	return random;
 }
 
-void plotVTU(int time_step, Node* head)
-{
 
-	Node *l = head;
+void plotVTU(int time_step, list<node> united[])
+{
 
 	string var = "utenn_";
 	var += to_string(time_step);
@@ -212,16 +186,17 @@ void plotVTU(int time_step, Node* head)
 	int addOff = 0, i = 0, counter = 0, total = 0, *offset;
 	float step = 0.0, color = 0.0;
 	offset = new int[cells];
-	
+	list <node>::iterator it;
+
 	for (i = 0; i < cells; i++)
 	{
 		if (i != 0)
-			offset[i] = nodes[i] + offset[i - 1];
+			offset[i] = united[i].size() + offset[i - 1];
 		
 		else
-			offset[i] = nodes[i];
+			offset[i] = united[i].size();
 
-		total += nodes[i];
+		total += united[i].size();
 	}
 
 	step = 1.0 / cells;
@@ -251,39 +226,37 @@ void plotVTU(int time_step, Node* head)
 	outFile << "\t\t\t<Points>\n";
 	outFile << "\t\t\t\t<DataArray type=\"Float32\" Name=\"Points\" NumberOfComponents=\"3\" format=\"ascii\">\n";
 
-	while (l)
+	for(i = 0; i < cells; i++)
 	{
-		outFile << "\t\t\t\t\t" << l->x << "  " << l->y << "  " << l->z << endl;
-		l = l->next;
+		it = united[i].begin();
+		while (it != united[i].end())
+		{
+			outFile << "\t\t\t\t\t" << *it;
+			it++;
+		}
 	}
-
+	
 	outFile << "\t\t\t\t</DataArray>\n";
 	outFile << "\t\t\t</Points>\n";
 
 	outFile << "\t\t\t<Cells>\n";
 	outFile << "\t\t\t\t<DataArray type=\"Int64\" Name=\"connectivity\" format=\"ascii\">";
-
-	l = head;
 	
 	for (i = 0; i < cells; i++)
 	{
 		outFile <<"\n\t\t\t\t\t";
+		counter = united[i].size() * i;
 		
-		if (i != 0)
-			addOff += nodes[i - 1];
-
-		outFile << l->value + addOff - 1;
-
-		for (counter = 1; counter < nodes[i]; counter++)
+		while (counter < (united[i].size() * (i + 1)))
 		{
-			if (l && l->next)
-				outFile << " " << connectivity[l->value + addOff] - 1;
-
-			l = l->next;
+			if (counter == (united[i].size() * (i + 1)) - 1)
+				outFile << counter;
+			
+			else
+				outFile << counter << " ";
+			
+			counter += 1;
 		}
-
-		if (l)
-			l = l->next;
 	}
 	
 	outFile << "\n\t\t\t\t</DataArray>\n";
