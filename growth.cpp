@@ -97,13 +97,18 @@ int main()
 	cout << "\n Enter the number of cells: ";
 	cin >> cells;
 
-	int counter = 0, yRange = 0, time_step = 0;
-	double zStep = 10.0;
+	int counter = 0, yRange = 0, time_step = 0, numberOfSteps = 0;
+	double zStep = 0.0;
 
 	node temp;
 	list <node> united[cells];
 	list <node>::reverse_iterator rit;
 	
+	cout << "\n Enter the number of time steps: ";
+	cin >> numberOfSteps;
+
+	zStep = 1000 / numberOfSteps;
+
 	while (counter < cells)
 	{	
 		yRange = counter * 100;
@@ -123,7 +128,7 @@ int main()
 		counter += 1;
 	}
 	
-	for (time_step = 0; time_step <= 100; time_step++)
+	for (time_step = 0; time_step <= numberOfSteps; time_step++)
 	{
 		plotVTU (time_step, united);
 
